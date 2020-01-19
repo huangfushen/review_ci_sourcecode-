@@ -177,17 +177,21 @@ class CodeIgniter
 
 	/**
 	 * Handles some basic app and environment setup.
+     * 处理一些基本的应用程序和环境设置
 	 */
 	public function initialize()
 	{
 		// Set default timezone on the server
+        //在服务器上设置默认时区
 		date_default_timezone_set($this->config->appTimezone ?? 'UTC');
 
 		// Setup Exception Handling
+        //设置异常处理
 		Services::exceptions()
 				->initialize();
-
+        //检测环境
 		$this->detectEnvironment();
+        //启动环境
 		$this->bootstrapEnvironment();
 
 		if (CI_DEBUG)
@@ -205,7 +209,7 @@ class CodeIgniter
 	 * that gets the required class instances, fires off the filters,
 	 * tries to route the response, loads the controller and generally
 	 * makes all of the pieces work together.
-	 *
+	 *如果你愿意的话，这就是“循环”。脚本的主要入口点获取所需的类实例，触发过滤器，尝试路由响应，加载控制器，通常使所有部分协同工作。
 	 * @param \CodeIgniter\Router\RouteCollectionInterface $routes
 	 * @param boolean                                      $returnResponse
 	 *
@@ -215,21 +219,28 @@ class CodeIgniter
 	 */
 	public function run(RouteCollectionInterface $routes = null, bool $returnResponse = false)
 	{
+	    //基准测试类
 		$this->startBenchmark();
 
+		//获取请求对象
 		$this->getRequestObject();
+		//获取响应对象
 		$this->getResponseObject();
-
+        //是否强制https访问
 		$this->forceSecureAccess();
-
+        //检测post中是否有 _method 字段重新定义了 http 请求方法
 		$this->spoofRequestMethod();
 
 		Events::trigger('pre_system');
 
 		// Check for a cached page. Execution will stop
 		// if the page has been cached.
+        //缓存
 		$cacheConfig = new Cache();
-		$response    = $this->displayCache($cacheConfig);
+		$response = $this->displayCache($cacheConfig);
+
+		//处理在发生解析等一些错误时应对方法
+
 		if ($response instanceof ResponseInterface)
 		{
 			if ($returnResponse)
@@ -295,9 +306,10 @@ class CodeIgniter
 	 */
 	protected function handleRequest(RouteCollectionInterface $routes = null, $cacheConfig, bool $returnResponse = false)
 	{
+	    //路由解析
 		$routeFilter = $this->tryToRouteIt($routes);
-
 		// Run "before" filters
+        //解析并执行过滤器
 		$filters = Services::filters();
 
 		// If any filters were specified within the routes file,
@@ -307,6 +319,7 @@ class CodeIgniter
 			$filters->enableFilter($routeFilter, 'before');
 			$filters->enableFilter($routeFilter, 'after');
 		}
+
 
 		$uri = $this->request instanceof CLIRequest ? $this->request->getPath() : $this->request->uri->getPath();
 
@@ -324,9 +337,8 @@ class CodeIgniter
 				return $possibleRedirect->send();
 			}
 		}
-
+        //检测controller是否存在
 		$returned = $this->startController();
-
 		// Closure controller has run in startController().
 		if (! is_callable($this->controller))
 		{
@@ -334,7 +346,7 @@ class CodeIgniter
 
 			// Is there a "post_controller_constructor" event?
 			Events::trigger('post_controller_constructor');
-
+            //创建控制器
 			$returned = $this->runController($controller);
 		}
 		else
@@ -396,10 +408,10 @@ class CodeIgniter
 	 * You can load different configurations depending on your
 	 * current environment. Setting the environment also influences
 	 * things like logging and error reporting.
-	 *
+	 *您可以根据当前环境加载不同的配置。 设置环境还会影响日志记录和错误报告等内容。
 	 * This can be set to anything, but default usage is:
-	 *
-	 *     development
+	 *可以将其设置为任何值，但是默认用法是：
+     *     development
 	 *     testing
 	 *     production
 	 */
@@ -449,7 +461,8 @@ class CodeIgniter
 	 *
 	 * The timer is used to display total script execution both in the
 	 * debug toolbar, and potentially on the displayed page.
-	 */
+     * 计时器用于在调试工具栏中以及可能在显示的页面上显示脚本执行的总数。
+     */
 	protected function startBenchmark()
 	{
 		$this->startTime = microtime(true);
@@ -511,7 +524,6 @@ class CodeIgniter
 	protected function getResponseObject()
 	{
 		$this->response = Services::response($this->config);
-
 		if (! is_cli() || ENVIRONMENT === 'testing')
 		{
 			$this->response->setProtocolVersion($this->request->getProtocolVersion());
